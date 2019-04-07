@@ -87,10 +87,10 @@ class HumanPlayer(Player):
 
 
 class Game:
-    def __init__ (self):
-        self.player_one = HumanPlayer('human', 1)
-        #self.player_two = RandomPlayer('ai', -1)
-        self.player_two = DefencePlayerWOD('ai', -1)
+    def __init__ (self, player_one, player_two, ui='CLI'):
+        self.player_one = player_one
+        self.player_two = player_two
+        self.ui = ui
 
 
         self.board =  self.get_empty_board()
@@ -137,47 +137,56 @@ class Game:
 
 
     def start(self):
-        self.print_bord()
+        if self.ui == 'CLI':
+            self.print_bord()
         turns = 0
         while True:
             pos = self.player_one.move(self.board)
             self.set_move(pos, 1)
             turns += 1
-            self.print_bord()
+            if self.ui == 'CLI':
+                self.print_bord()
 
 
             game_status = self.check_game()
             if game_status == 1:
-                print('player one won!')
-                break
+                if self.ui == 'CLI':
+                    print('player one won!')
+                return 1
 
             if game_status == -1:
-                print('player two won!')
-                break
+                if self.ui == 'CLI':
+                    print('player two won!')
+                return -1
 
             if turns == 9:
-                print('draw')
-                break
+                if self.ui == 'CLI':
+                    print('draw')
+                return 0
 
             pos = self.player_two.move(self.board)
             self.set_move(pos, -1)
             turns += 1
-            self.print_bord()
+            if self.ui == 'CLI':
+                self.print_bord()
 
 
 
             game_status = self.check_game()
             if game_status == 1:
-                print('player one won!')
-                break
+                if self.ui == 'CLI':
+                    print('player one won!')
+                return 1
 
             if game_status == -1:
-                print('player two won!')
-                break
+                if self.ui == 'CLI':
+                    print('player two won!')
+                return -1
             
             if turns == 9:
-                print('draw')
-                break
+                if self.ui == 'CLI':
+                    print('draw')
+                return 0
 
 
     def check_player_won(self, player):
@@ -205,5 +214,36 @@ class Game:
         return 0
 
 
-game = Game()
-game.start()
+def game_agains_ai():
+    player_one = HumanPlayer('human', 1)
+    # self.player_two = RandomPlayer('ai', -1)
+    player_two = DefencePlayerWOD('ai', -1)
+    game = Game(player_one, player_two)
+    winner = game.start()
+    print(winner)
+
+
+def simulate_games():
+    player_one = RandomPlayer('ai_random', 1)
+    player_two = DefencePlayerWOD('ai', -1)
+    one = two = draw = 0
+    number_of_trials = 1e3
+    for i in range(int(number_of_trials)):
+        game = Game(player_one, player_two, ui=None)
+        winner = game.start()
+
+        if winner == 1:
+            one += 1
+        if winner == -1:
+            two += 1
+        if winner == 0:
+            draw += 1
+
+    print('Player one won : {}'.format(one))
+    print('Player two won : {}'.format(two))
+    print('Draw           : {}'.format(draw))
+
+
+if __name__ == '__main__':
+    # game_agains_ai()
+    simulate_games()
