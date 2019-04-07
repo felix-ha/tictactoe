@@ -50,13 +50,33 @@ class Game:
                                 [0, 0, 0],
                                 [0, 0, 0]])
 
+    def get_empty_string_board(self):
+        return np.array([[0, 0, 0],
+                                [0, 0, 0],
+                                [0, 0, 0]], dtype=str)
+
+    def convert_bord_xo(self, A):
+        result = self.get_empty_string_board()
+
+        for i in range(3):
+            for j in range(3):
+                if A[i,j] == -1:
+                    result[i,j] = 'O'
+                elif A[i,j] == 1:
+                    result[i,j] = 'X'
+                else:
+                    result[i,j] = ' '
+
+        return result
+
     def print_bord(self):
         os.system('cls')
-        print(str(self.board[0,0]) + ' | ' + str(self.board[0,1]) + ' | ' + str(self.board[0,2]))
+        board = self.convert_bord_xo(self.board)
+        print(str(board[0,0]) + ' | ' + str(board[0,1]) + ' | ' + str(board[0,2]))
         print('----------')
-        print(str(self.board[1,0]) + ' | ' + str(self.board[1,1]) + ' | ' + str(self.board[1,2]))
+        print(str(board[1,0]) + ' | ' + str(board[1,1]) + ' | ' + str(board[1,2]))
         print('----------')
-        print(str(self.board[2,0]) + ' | ' + str(self.board[2,1]) + ' | ' + str(self.board[2,2]))
+        print(str(board[2,0]) + ' | ' + str(board[2,1]) + ' | ' + str(board[2,2]))
         print()
 
     def set_move(self, move, player):
