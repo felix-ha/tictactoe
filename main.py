@@ -222,12 +222,13 @@ def game_agains_ai():
     winner = game.start()
     print(winner)
 
-
+import matplotlib.pyplot as plt
 def simulate_games():
     player_one = RandomPlayer('ai_random', 1)
-    player_two = DefencePlayerWOD('ai', -1)
+    player_two = RandomPlayer('ai_random', -1)
+    # player_two = DefencePlayerWOD('ai', -1)
     one = two = draw = 0
-    number_of_trials = 1e3
+    number_of_trials = 1e5
     for i in range(int(number_of_trials)):
         game = Game(player_one, player_two, ui=None)
         winner = game.start()
@@ -243,6 +244,11 @@ def simulate_games():
     print('Player two won : {}'.format(two))
     print('Draw           : {}'.format(draw))
 
+    x = np.arange(3)
+    data = [one, draw, two]
+    plt.bar(x, data)
+    plt.xticks(x, ('One', 'Draw', 'Two'))
+    plt.show()
 
 if __name__ == '__main__':
     # game_agains_ai()
