@@ -385,15 +385,27 @@ def simulate_games():
     one = two = draw = 0
     number_of_trials = 1e4
     for i in range(int(number_of_trials)):
-        game = Game(player_one, player_two, ui=None)
-        winner = game.start()
+        if random.random() < 0.5:
+            game = Game(player_one, player_two, ui=None)
+            winner = game.start()
+            if winner == 1:
+                one += 1
+            if winner == -1:
+                two += 1
+            if winner == 0:
+                draw += 1
+        else:
+            game = Game(player_two, player_one, ui=None)
+            winner = game.start()
+            if winner == 1:
+                two += 1
+            if winner == -1:
+                one += 1
+            if winner == 0:
+                draw += 1
 
-        if winner == 1:
-            one += 1
-        if winner == -1:
-            two += 1
-        if winner == 0:
-            draw += 1
+
+
 
     print('Player one won : {}'.format(one))
     print('Player two won : {}'.format(two))
