@@ -24,53 +24,6 @@ class RandomPlayer(Player):
                 return (x,y)
 
 
-class DefencePlayerWOD(Player):
-    '''
-    prevents opened from wining, does not check diagonals
-    '''
-    def __init__(self, name, value):
-        Player.__init__(self, name, value)
-        if self.value == -1:
-            self.opened_value = 1
-        else:
-            self.opened_value = -1
-
-
-    def get_empty_cell_row(self, row, board):
-        for j in range(3):
-            if board[row, j] == 0:
-                return j
-
-    def get_empty_cell_column(self, column, board):
-        for i in range(3):
-            if board[i, column] == 0:
-                return i
-
-
-    def move(self, board):
-
-        # check rows
-        for i in range(3):
-            if np.sum(board[i,:]) == self.opened_value * 2:
-                empty_cell_row = self.get_empty_cell_row(i, board)
-                if board[i, empty_cell_row] == 0:
-                    return i, empty_cell_row
-
-        # check columns
-        for j in range(3):
-            if np.sum(board[:,j]) == self.opened_value * 2:
-                empty_cell_column = self.get_empty_cell_column(j, board)
-                if board[empty_cell_column, j] == 0:
-                    return empty_cell_column, j
-
-
-        while True:
-            x = random.randint(0, 2)
-            y = random.randint(0, 2)
-            if board[x, y] == 0:
-                return (x, y)
-
-
 class DefencePlayer(Player):
     '''
     prevents opened from wining
@@ -417,7 +370,6 @@ class Game:
 def game_agains_ai():
     player_one = HumanPlayer('human', 1)
     # self.player_two = RandomPlayer('ai', -1)
-    # player_two = DefencePlayerWOD('ai', -1)
     # player_two = DefencePlayer('ai', -1)
     player_two = OffensivePlayer('ai', -1)
     game = Game(player_one, player_two)
@@ -429,7 +381,6 @@ def simulate_games():
     # player_one = OffensivePlayer('ai', -1)
     player_one = OffensiveDefensivePlayer('ai', 1)
     # player_two = RandomPlayer('ai_random', -1)
-    # player_two = DefencePlayerWOD('ai', -1)
     player_two = RandomPlayer('ai_random', -1)
     one = two = draw = 0
     number_of_trials = 1e4
