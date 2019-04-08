@@ -71,6 +71,66 @@ class DefencePlayerWOD(Player):
                 return (x, y)
 
 
+class DefencePlayer(Player):
+    '''
+    prevents opened from wining
+    '''
+    def __init__(self, name, value):
+        Player.__init__(self, name, value)
+        if self.value == -1:
+            self.opened_value = 1
+        else:
+            self.opened_value = -1
+
+
+    def get_empty_cell_row(self, row, board):
+        for j in range(3):
+            if board[row, j] == 0:
+                return j
+
+    def get_empty_cell_column(self, column, board):
+        for i in range(3):
+            if board[i, column] == 0:
+                return i
+
+
+    def move(self, board):
+
+        # check rows
+        for i in range(3):
+            if np.sum(board[i,:]) == self.opened_value * 2:
+                empty_cell_row = self.get_empty_cell_row(i, board)
+                if board[i, empty_cell_row] == 0:
+                    return i, empty_cell_row
+
+        # check columns
+        for j in range(3):
+            if np.sum(board[:,j]) == self.opened_value * 2:
+                empty_cell_column = self.get_empty_cell_column(j, board)
+                if board[empty_cell_column, j] == 0:
+                    return empty_cell_column, j
+
+        # check diagonals
+        if board[0,0] + board[1,1] + board[2,2] == self.opened_value * 2:
+            for i in range(3):
+                if board[i,i] == 0:
+                    return i, i
+
+        if board[2,0] + board[1,1] + board[0,2] == self.opened_value * 2:
+            if board[2, 0] == 0:
+                return 2, 0
+            if board[1, 1] == 0:
+                return 1, 1
+            if board[0, 2] == 0:
+                return 0, 2
+
+        while True:
+            x = random.randint(0, 2)
+            y = random.randint(0, 2)
+            if board[x, y] == 0:
+                return (x, y)
+
+
 class HumanPlayer(Player):
     def __init__(self, name, value):
         Player.__init__(self, name, value)
@@ -217,7 +277,8 @@ class Game:
 def game_agains_ai():
     player_one = HumanPlayer('human', 1)
     # self.player_two = RandomPlayer('ai', -1)
-    player_two = DefencePlayerWOD('ai', -1)
+    # player_two = DefencePlayerWOD('ai', -1)
+    player_two = DefencePlayer('ai', -1)
     game = Game(player_one, player_two)
     winner = game.start()
     print(winner)
@@ -251,5 +312,5 @@ def simulate_games():
     plt.show()
 
 if __name__ == '__main__':
-    # game_agains_ai()
-    simulate_games()
+    game_agains_ai()
+    # simulate_games()
