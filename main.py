@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import os
-
+import time
 
 class Player:
     def __init__(self, name):
@@ -13,7 +13,6 @@ class Player:
 
     def set_value(self, value):
         self.value = value
-
 
 
 class RandomPlayer(Player):
@@ -229,6 +228,151 @@ class OffensiveDefensivePlayer(Player):
                 return (x, y)
 
 
+class ProbabilityPlayer(Player):
+    '''
+    simulates moved and takes move with highest probability to win
+    '''
+    def __init__(self, name):
+        Player.__init__(self, name)
+        self.N = 1000
+
+
+    def check_player_won(self, player, board):
+        for i in range(3):
+            if np.sum(board[:,i]) == player:
+                return True
+
+            if np.sum(board[i,:]) == player:
+                return True
+
+        if board[0,0] + board[1,1] + board[2,2] == player:
+            return True
+
+        if board[2,0] + board[1,1] + board[0,2] == player:
+            return True
+
+        return False
+
+
+    def check_game(self, board):
+        if self.check_player_won(3, board):
+            return 1
+        if self.check_player_won(-3, board):
+            return -1
+        return 0
+
+
+    def set_move(self, board, move, value):
+        if board[move[0], move[1]] == 0:
+            board[move[0], move[1]] = value
+        else:
+            raise Exception
+
+    def simulate_game(self, board):
+        player = RandomPlayer('rand1')
+        player.set_value(self.value)
+        opened = RandomPlayer('rand2')
+        opened.set_value(self.value*-1)
+
+        game_status = self.check_game(board)
+
+        if game_status == self.value:
+            return self.value
+        if game_status == self.value * -1:
+            return self.value * -1
+        if len(np.argwhere(board == 0)) == 0:
+            return 0
+
+        while True:
+
+            pos = opened.move(board)
+            self.set_move(board, pos, self.value * -1)
+            game_status = self.check_game(board)
+
+            if game_status == self.value:
+                return self.value
+            if game_status == self.value * -1:
+                return self.value * -1
+            if len(np.argwhere(board == 0)) == 0:
+                return 0
+
+
+            pos = player.move(board)
+            self.set_move(board, pos, self.value)
+            game_status = self.check_game(board)
+
+            if game_status == self.value:
+                return self.value
+            if game_status == self.value * -1:
+                return self.value * -1
+            if len(np.argwhere(board == 0)) == 0:
+                return 0
+
+
+
+    def get_probability(self, board):
+        win = loss = draw = 0
+        for i in range(self.N):
+            result = self.simulate_game(board.copy())
+            if result == self.value:
+                win +=1
+            if result == self.value * -1:
+                loss +=1
+            if result == 0:
+                draw += 1
+
+        # print('win  {}'.format(win/self.N))
+        # print('loss {}'.format(loss/self.N))
+        # print('draw {}'.format(draw/self.N))
+        # print('sum  {}'.format(win/self.N+loss/self.N+draw/self.N))
+
+        if win == self.N:
+            return 0.999
+        return win / self.N
+
+
+
+
+
+    def get_probability_board(self, board):
+        board_probability = np.array(board.copy(), dtype=np.float)
+        player_one = RandomPlayer('rand1')
+        player_two = RandomPlayer('rand2')
+        player_one.set_value(1)
+        player_two.set_value(-1)
+
+        for i in range(3):
+            for j in range(3):
+                if board[i,j] != 0:
+                    continue
+
+                board_to_simulate = board.copy()
+                board_to_simulate[i,j] = self.value
+                probability = self.get_probability(board_to_simulate)
+                board_probability[i,j] = probability
+
+        print(board_probability)
+        quit()
+
+
+
+
+
+
+
+
+
+
+
+    def move(self, board):
+        while True:
+            x = random.randint(0,2)
+            y = random.randint(0,2)
+            if board[x,y] == 0:
+                return (x,y)
+
+
+
 class HumanPlayer(Player):
     def __init__(self, name):
         Player.__init__(self, name)
@@ -427,4 +571,12 @@ def simulate_games():
 
 if __name__ == '__main__':
     # game_agains_ai()
-    simulate_games()
+    # simulate_games()
+
+    pl = ProbabilityPlayer('ai')
+    pl.set_value(1)
+    board = np.array([[1, -1, 1],
+                      [0, 1, 0],
+                      [-1, -1, 0]])
+
+    pl.get_probability_board(board)
