@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import os
-import time
+
 
 class Player:
     def __init__(self, name):
@@ -230,11 +230,11 @@ class OffensiveDefensivePlayer(Player):
 
 class ProbabilityPlayer(Player):
     '''
-    simulates moved and takes move with highest probability to win
+    simulates moves and takes move with highest probability to win
     '''
     def __init__(self, name):
         Player.__init__(self, name)
-        self.N = 1000
+        self.N = 10
 
 
     def check_player_won(self, player, board):
@@ -327,7 +327,7 @@ class ProbabilityPlayer(Player):
         # print('sum  {}'.format(win/self.N+loss/self.N+draw/self.N))
 
         if win == self.N:
-            return 0.999
+            return 1
         return win / self.N
 
 
@@ -335,7 +335,9 @@ class ProbabilityPlayer(Player):
 
 
     def get_probability_board(self, board):
-        board_probability = np.array(board.copy(), dtype=np.float)
+        board_probability = np.array([[0., 0, 0],
+                      [0, 0, 0],
+                      [0, 0, 0]])
         player_one = RandomPlayer('rand1')
         player_two = RandomPlayer('rand2')
         player_one.set_value(1)
@@ -351,25 +353,24 @@ class ProbabilityPlayer(Player):
                 probability = self.get_probability(board_to_simulate)
                 board_probability[i,j] = probability
 
-        print(board_probability)
-        quit()
-
-
-
-
-
-
-
-
+        return board_probability
 
 
 
     def move(self, board):
+        probability_board = self.get_probability_board(board)
+
+        if np.sum(probability_board) > 0.000000001:
+            return np.argwhere(probability_board == np.max(probability_board))[0]
+
         while True:
-            x = random.randint(0,2)
-            y = random.randint(0,2)
-            if board[x,y] == 0:
-                return (x,y)
+            x = random.randint(0, 2)
+            y = random.randint(0, 2)
+            if board[x, y] == 0:
+                return (x, y)
+
+
+
 
 
 
@@ -447,7 +448,7 @@ class Game:
         turns = 0
         while True:
             pos = self.player_one.move(self.board)
-            self.set_move(pos, 1)
+            self.set_move(pos, self.player_one.value)
             turns += 1
             if self.ui == 'CLI':
                 self.print_bord()
@@ -470,7 +471,7 @@ class Game:
                 return 0
 
             pos = self.player_two.move(self.board)
-            self.set_move(pos, -1)
+            self.set_move(pos, self.player_two.value)
             turns += 1
             if self.ui == 'CLI':
                 self.print_bord()
@@ -523,19 +524,22 @@ def game_agains_ai():
     player_one = HumanPlayer('human')
     # self.player_two = RandomPlayer('ai')
     # player_two = DefencePlayer('ai')
-    player_two = OffensivePlayer('ai')
+    # player_two = OffensivePlayer('ai')
+    player_two = ProbabilityPlayer('ai_prob')
     game = Game(player_one, player_two)
     winner = game.start()
     print(winner)
 
 import matplotlib.pyplot as plt
 def simulate_games():
-    # player_one = OffensivePlayer('ai')
-    player_one = OffensiveDefensivePlayer('ai')
+    player_one = OffensivePlayer('ai')
+    # player_one = DefencePlayer('ai')
+    # player_one = OffensiveDefensivePlayer('ai')
+    # player_one = RandomPlayer('ai_random')
     # player_two = RandomPlayer('ai_random')
-    player_two = RandomPlayer('ai_random')
+    player_two = ProbabilityPlayer('ai_prob')
     one = two = draw = 0
-    number_of_trials = 1e4
+    number_of_trials = 5e1
     for i in range(int(number_of_trials)):
         if random.random() < 0.5:
             game = Game(player_one, player_two, ui=None)
@@ -546,6 +550,8 @@ def simulate_games():
                 two += 1
             if winner == 0:
                 draw += 1
+            print('winner : {} game {}'.format(winner,i))
+
         else:
             game = Game(player_two, player_one, ui=None)
             winner = game.start()
@@ -555,10 +561,12 @@ def simulate_games():
                 one += 1
             if winner == 0:
                 draw += 1
+            print('winner : {} game {}'.format(winner,i))
 
 
 
 
+    print()
     print('Player one won : {}'.format(one))
     print('Player two won : {}'.format(two))
     print('Draw           : {}'.format(draw))
@@ -571,12 +579,5 @@ def simulate_games():
 
 if __name__ == '__main__':
     # game_agains_ai()
-    # simulate_games()
+    simulate_games()
 
-    pl = ProbabilityPlayer('ai')
-    pl.set_value(1)
-    board = np.array([[1, -1, 1],
-                      [0, 1, 0],
-                      [-1, -1, 0]])
-
-    pl.get_probability_board(board)
