@@ -4,17 +4,21 @@ import os
 
 
 class Player:
-    def __init__(self, name, value):
+    def __init__(self, name):
         self.name = name
-        self.value = value
+        self.value = None
 
     def move(self, board):
         raise Exception
 
+    def set_value(self, value):
+        self.value = value
+
+
 
 class RandomPlayer(Player):
-    def __init__(self, name, value):
-        Player.__init__(self, name, value)
+    def __init__(self, name):
+        Player.__init__(self, name)
         
     def move(self, board):
         while True:
@@ -28,12 +32,8 @@ class DefencePlayer(Player):
     '''
     prevents opened from wining
     '''
-    def __init__(self, name, value):
-        Player.__init__(self, name, value)
-        if self.value == -1:
-            self.opened_value = 1
-        else:
-            self.opened_value = -1
+    def __init__(self, name):
+        Player.__init__(self, name)
 
 
     def get_empty_cell_row(self, row, board):
@@ -48,6 +48,10 @@ class DefencePlayer(Player):
 
 
     def move(self, board):
+        if self.value == -1:
+            self.opened_value = 1
+        else:
+            self.opened_value = -1
 
         # check rows
         for i in range(3):
@@ -88,8 +92,8 @@ class OffensivePlayer(Player):
     '''
     tries to win if it is possible on the next move
     '''
-    def __init__(self, name, value):
-        Player.__init__(self, name, value)
+    def __init__(self, name):
+        Player.__init__(self, name)
 
     def get_empty_cell_row(self, row, board):
         for j in range(3):
@@ -142,12 +146,9 @@ class OffensiveDefensivePlayer(Player):
     '''
     tries to win if it is possible on the next move
     '''
-    def __init__(self, name, value):
-        Player.__init__(self, name, value)
-        if self.value == -1:
-            self.opened_value = 1
-        else:
-            self.opened_value = -1
+    def __init__(self, name):
+        Player.__init__(self, name)
+
 
     def get_empty_cell_row(self, row, board):
         for j in range(3):
@@ -160,6 +161,10 @@ class OffensiveDefensivePlayer(Player):
                 return i
 
     def move(self, board):
+        if self.value == -1:
+            self.opened_value = 1
+        else:
+            self.opened_value = -1
 
         # check rows
         for i in range(3):
@@ -225,8 +230,8 @@ class OffensiveDefensivePlayer(Player):
 
 
 class HumanPlayer(Player):
-    def __init__(self, name, value):
-        Player.__init__(self, name, value)
+    def __init__(self, name):
+        Player.__init__(self, name)
         
     def move(self, board):
         while True:
@@ -290,6 +295,9 @@ class Game:
 
 
     def start(self):
+        self.player_one.set_value(1)
+        self.player_two.set_value(-1)
+
         if self.ui == 'CLI':
             self.print_bord()
         turns = 0
@@ -368,20 +376,20 @@ class Game:
 
 
 def game_agains_ai():
-    player_one = HumanPlayer('human', 1)
-    # self.player_two = RandomPlayer('ai', -1)
-    # player_two = DefencePlayer('ai', -1)
-    player_two = OffensivePlayer('ai', -1)
+    player_one = HumanPlayer('human')
+    # self.player_two = RandomPlayer('ai')
+    # player_two = DefencePlayer('ai')
+    player_two = OffensivePlayer('ai')
     game = Game(player_one, player_two)
     winner = game.start()
     print(winner)
 
 import matplotlib.pyplot as plt
 def simulate_games():
-    # player_one = OffensivePlayer('ai', -1)
-    player_one = OffensiveDefensivePlayer('ai', 1)
-    # player_two = RandomPlayer('ai_random', -1)
-    player_two = RandomPlayer('ai_random', -1)
+    # player_one = OffensivePlayer('ai')
+    player_one = OffensiveDefensivePlayer('ai')
+    # player_two = RandomPlayer('ai_random')
+    player_two = RandomPlayer('ai_random')
     one = two = draw = 0
     number_of_trials = 1e4
     for i in range(int(number_of_trials)):
