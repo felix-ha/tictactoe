@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import os
+import pickle
 
 
 class Player:
@@ -13,6 +14,7 @@ class Player:
 
     def set_value(self, value):
         self.value = value
+
 
 
 class RandomPlayer(Player):
@@ -234,7 +236,82 @@ class ProbabilityPlayer(Player):
     '''
     def __init__(self, name):
         Player.__init__(self, name)
-        self.N = 10
+        self.N = 20
+
+        self.save = False
+        root_dir = os.getcwd()
+        pickle_name = 'probability_player.pickle'
+        self.pickle_file = os.path.join(root_dir, pickle_name)
+
+        try:
+            with open(self.pickle_file, 'rb') as f:
+                save = pickle.load(f)
+                self.boards = save['boards']
+                self.probability_boards = save['probability_boards']
+                del save
+        except Exception as e:
+            self.boards = []
+            self.probability_boards = []
+
+        # print(len(self.boards))
+        # print(len(self.probability_boards))
+        # quit()
+
+
+        # index = self.check_if_board_is_in_prob(B)
+        # print(probs[index])
+
+    def set_value(self, value):
+        Player.set_value(self, value)
+        try:
+            with open(self.pickle_file, 'rb') as f:
+                save = pickle.load(f)
+                if value == 1:
+                    self.boards = save['boards_one']
+                    self.probability_boards = save['probability_boards_one']
+                else:
+                    self.boards = save['boards_minus']
+                    self.probability_boards = save['probability_boards_minus']
+                del save
+        except Exception as e:
+            self.boards = []
+            self.probability_boards = []
+
+
+    def save_boards(self):
+        try:
+            f = open(self.pickle_file, 'wb')
+            save = {
+                'boards': self.boards,
+                'probability_boards':self.probability_boards,
+            }
+            pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
+            f.close()
+        except Exception as e:
+            print('Unable to save data to', self.pickle_file, ':', e)
+            raise
+
+
+    def check_if_board_is_in_prob(self, board):
+        index = 0
+        for elem in self.boards:
+            equal = True
+            for i in range(3):
+                for j in range(3):
+                    if board[i,j] != elem[i,j]:
+                        equal = False
+
+            if equal:
+                return index
+
+            index += 1
+
+        return -1
+
+
+
+
+
 
 
     def check_player_won(self, player, board):
@@ -356,8 +433,26 @@ class ProbabilityPlayer(Player):
         return board_probability
 
 
+    def __del__(self):
+        if self.save:
+            self.save_boards()
+
 
     def move(self, board):
+        # index = self.check_if_board_is_in_prob(board)
+        # if index == -1:
+        #     probability_board = self.get_probability_board(board)
+        #     self.boards.append(board)
+        #     self.probability_boards.append(probability_board)
+        #     self.save = True
+        #     if np.sum(probability_board) > 0.000000001:
+        #         return np.argwhere(probability_board == np.max(probability_board))[0]
+        #
+        # else:
+        #     probability_board = self.probability_boards[index]
+        #     if np.sum(probability_board) > 0.000000001:
+        #         return np.argwhere(probability_board == np.max(probability_board))[0]
+
         probability_board = self.get_probability_board(board)
 
         if np.sum(probability_board) > 0.000000001:
@@ -436,6 +531,12 @@ class Game:
         if self.board[move[0], move[1]] == 0:
             self.board[move[0], move[1]] = player
         else:
+            print()
+            print(move)
+            print(player)
+            print(self.board)
+            print()
+            print()
             raise Exception
 
 
@@ -580,4 +681,5 @@ def simulate_games():
 if __name__ == '__main__':
     # game_agains_ai()
     simulate_games()
+
 
