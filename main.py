@@ -370,6 +370,73 @@ class ProbabilityPlayer(Player):
                 return (x, y)
 
 
+class TemporalDifferencePlayer(Player):
+    '''
+    implementation of temporal-difference learning method from [sutton, barto]
+    '''
+    def __init__(self, name):
+        Player.__init__(self, name)
+
+    def check_player_won(self, value, board):
+        for i in range(3):
+            if np.sum(board[:,i]) == value:
+                return True
+
+            if np.sum(board[i,:]) == value:
+                return True
+
+        if board[0,0] + board[1,1] + board[2,2] == value:
+            return True
+
+        if board[2,0] + board[1,1] + board[0,2] == value:
+            return True
+
+        return False
+
+
+    def check_game(self, board):
+        if self.check_player_won(3, board):
+            return 1
+        if self.check_player_won(-3, board):
+            return 0
+        return 0.5
+
+    def get_value_board(self, board):
+        board_probability = -1 * np.ones([3,3])
+
+        for i in range(3):
+            for j in range(3):
+                if board[i,j] != 0:
+                    continue
+
+                board_next_move = board.copy()
+                board_next_move[i,j] = 1
+                probability_own_move = self.check_game(board_next_move)
+
+                board_probability[i, j] = probability_own_move
+
+                if probability_own_move != 1:
+                    board_next_move[i, j] = -1
+                    probability_enemy_move = self.check_game(board_next_move)
+                    if probability_enemy_move == 0:
+                        board_probability[i, j] = 0
+
+        return board_probability
+
+    def move(self, board):
+        if self.value == -1:
+            value_board = self.get_value_board(board*-1)
+        else:
+            value_board = self.get_value_board(board)
+
+        if np.sum(value_board) != -9:
+            return np.argwhere(value_board == np.max(value_board))[0]
+
+        while True:
+            x = random.randint(0,2)
+            y = random.randint(0,2)
+            if board[x,y] == 0:
+                return (x,y)
 
 
 
@@ -534,7 +601,7 @@ def game_against_ai():
 def test_all_players():
     players = [RandomPlayer('ai'), OffensivePlayer('ai'),
                DefencePlayer('ai'), OffensiveDefensivePlayer('ai'),
-               ProbabilityPlayer('ai')]
+               ProbabilityPlayer('ai'), TemporalDifferencePlayer('ai')]
 
     for i in range(len(players)):
         for j in range(len(players)):
@@ -546,14 +613,14 @@ def test_all_players():
 
 import matplotlib.pyplot as plt
 def simulate_games():
-    player_one = OffensivePlayer('ai')
+    player_one = RandomPlayer('ai')
     # player_one = DefencePlayer('ai')
     # player_one = OffensiveDefensivePlayer('ai')
     # player_one = RandomPlayer('ai_random')
     # player_two = RandomPlayer('ai_random')
-    player_two = ProbabilityPlayer('ai_prob')
+    player_two = TemporalDifferencePlayer('ai')
     one = two = draw = 0
-    number_of_trials = 5e1
+    number_of_trials = 1e6
     for i in range(int(number_of_trials)):
         if random.random() < 0.5:
             game = Game(player_one, player_two, ui=None)
@@ -564,7 +631,7 @@ def simulate_games():
                 two += 1
             if winner == 0:
                 draw += 1
-            print('winner : {} game {}'.format(winner,i))
+            # print('winner : {} game {}'.format(winner,i))
 
         else:
             game = Game(player_two, player_one, ui=None)
@@ -575,7 +642,7 @@ def simulate_games():
                 one += 1
             if winner == 0:
                 draw += 1
-            print('winner : {} game {}'.format(winner,i))
+            # print('winner : {} game {}'.format(winner,i))
 
 
 
@@ -593,6 +660,8 @@ def simulate_games():
 
 if __name__ == '__main__':
     # game_against_ai()
-    # simulate_games()
+    simulate_games()
+
+
     test_all_players()
 
