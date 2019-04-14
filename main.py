@@ -520,7 +520,7 @@ class Game:
         return 0
 
 
-def game_agains_ai():
+def game_against_ai():
     player_one = HumanPlayer('human')
     # self.player_two = RandomPlayer('ai')
     # player_two = DefencePlayer('ai')
@@ -529,6 +529,20 @@ def game_agains_ai():
     game = Game(player_one, player_two)
     winner = game.start()
     print(winner)
+
+
+def test_all_players():
+    players = [RandomPlayer('ai'), OffensivePlayer('ai'),
+               DefencePlayer('ai'), OffensiveDefensivePlayer('ai'),
+               ProbabilityPlayer('ai')]
+
+    for i in range(len(players)):
+        for j in range(len(players)):
+            game = Game(players[i], players[j], ui=None)
+            game.start()
+
+    print('test was successful')
+
 
 import matplotlib.pyplot as plt
 def simulate_games():
@@ -578,6 +592,7 @@ def simulate_games():
     plt.show()
 
 if __name__ == '__main__':
-    # game_agains_ai()
-    simulate_games()
+    # game_against_ai()
+    # simulate_games()
+    test_all_players()
 
