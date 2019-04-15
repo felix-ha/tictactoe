@@ -14,7 +14,7 @@ class Player:
     def set_value(self, value):
         self.value = value
 
-    def update_final_board(self, board, value):
+    def update_final_board(self, board, board_prev, value):
         pass
 
 
@@ -381,18 +381,41 @@ class TemporalDifferencePlayer(Player):
         Player.__init__(self, name)
         self.boards = np.ndarray(shape=[0, 9], dtype=int)
         self.values = []
+        self.alpha = 0.5
+        self.games = 0
 
     def __del__(self):
-        for (board, val) in zip(self.boards, self.values):
-            print(board.reshape(3,3), val)
+        pass
 
-    def update_final_board(self, board, value):
+        print(self.alpha)
+
+
+
+
+    def update_final_board(self, board, board_prev, value):
         index = self.get_index(board)
         if index == -1:
             if self.value == -1:
                 self.add_board(board*-1, value)
             else:
                 self.add_board(board, value)
+
+        index = self.get_index(board_prev)
+
+        # update of last step, if game is lost
+        if value == 0:
+            # enemy turn needs no update
+            if index != -1:
+                V_current = self.values[index]
+                V_current = V_current + self.alpha * (0 - V_current)
+                self.values[index] = V_current
+
+        self.games += 1
+        self.alpha *= np.exp(-0.00000001*self.games)
+
+
+
+
 
 
     def get_index(self, board):
@@ -425,9 +448,13 @@ class TemporalDifferencePlayer(Player):
     def check_game(self, board):
         if self.check_player_won(3, board):
             return 1
-        if self.check_player_won(-3, board):
-            return 0
-        return 0.5
+
+        index = self.get_index(board)
+        if index == -1:
+            self.add_board(board, 0.5)
+            return 0.5
+        else:
+            return self.values[index]
 
     def get_value_board(self, board):
         board_probability = -1 * np.ones([3,3])
@@ -443,28 +470,37 @@ class TemporalDifferencePlayer(Player):
 
                 board_probability[i, j] = probability_own_move
 
-                if probability_own_move != 1:
-                    board_next_move[i, j] = -1
-                    probability_enemy_move = self.check_game(board_next_move)
-                    if probability_enemy_move == 0:
-                        board_probability[i, j] = 0
-
         return board_probability
 
     def move(self, board):
-        if self.value == -1:
-            value_board = self.get_value_board(board*-1)
+        exploit = random.random()
+        if exploit > self.alpha:
+            index = self.get_index(board)
+            if index == -1:
+                V_t_current = 0.5
+                self.add_board(board, V_t_current)
+            else:
+                V_t_current = self.values[index]
+
+
+            if self.value == -1:
+                value_board = self.get_value_board(board*-1)
+            else:
+                value_board = self.get_value_board(board)
+
+            if np.sum(value_board) != -9:
+                V_t_next = np.max(value_board)
+                move = np.argwhere(value_board == np.max(value_board))[0]
+                self.values[index] = V_t_current + self.alpha *(V_t_next - V_t_current)
+                return move
+
+        #explore
         else:
-            value_board = self.get_value_board(board)
-
-        if np.sum(value_board) != -9:
-            return np.argwhere(value_board == np.max(value_board))[0]
-
-        while True:
-            x = random.randint(0,2)
-            y = random.randint(0,2)
-            if board[x,y] == 0:
-                return (x,y)
+            while True:
+                x = random.randint(0,2)
+                y = random.randint(0,2)
+                if board[x,y] == 0:
+                    return (x,y)
 
 
 
@@ -542,6 +578,7 @@ class Game:
             self.print_bord()
         turns = 0
         while True:
+            board_prev = self.board.copy()
             pos = self.player_one.move(self.board)
             self.set_move(pos, self.player_one.value)
             turns += 1
@@ -553,52 +590,51 @@ class Game:
             if game_status == 1:
                 if self.ui == 'CLI':
                     print('player one won!')
-                self.player_one.update_final_board(self.board, 1)
-                self.player_two.update_final_board(self.board, 0)
+                self.player_one.update_final_board(self.board, board_prev, 1)
+                self.player_two.update_final_board(self.board, board_prev, 0)
                 return 1
 
             if game_status == -1:
                 if self.ui == 'CLI':
                     print('player two won!')
-                self.player_one.update_final_board(self.board, 0)
-                self.player_two.update_final_board(self.board, 1)
+                self.player_one.update_final_board(self.board, board_prev, 0)
+                self.player_two.update_final_board(self.board, board_prev, 1)
                 return -1
 
             if turns == 9:
                 if self.ui == 'CLI':
                     print('draw')
-                self.player_one.update_final_board(self.board, 0)
-                self.player_two.update_final_board(self.board, 0)
+                self.player_one.update_final_board(self.board, board_prev, 0)
+                self.player_two.update_final_board(self.board, board_prev, 0)
                 return 0
 
+            board_prev = self.board.copy()
             pos = self.player_two.move(self.board)
             self.set_move(pos, self.player_two.value)
             turns += 1
             if self.ui == 'CLI':
                 self.print_bord()
 
-
-
             game_status = self.check_game()
             if game_status == 1:
                 if self.ui == 'CLI':
                     print('player one won!')
-                self.player_one.update_final_board(self.board, 1)
-                self.player_two.update_final_board(self.board, 0)
+                self.player_one.update_final_board(self.board, board_prev, 1)
+                self.player_two.update_final_board(self.board, board_prev, 0)
                 return 1
 
             if game_status == -1:
                 if self.ui == 'CLI':
                     print('player two won!')
-                self.player_one.update_final_board(self.board, 0)
-                self.player_two.update_final_board(self.board, 1)
+                self.player_one.update_final_board(self.board, board_prev, 0)
+                self.player_two.update_final_board(self.board, board_prev, 1)
                 return -1
 
             if turns == 9:
                 if self.ui == 'CLI':
                     print('draw')
-                self.player_one.update_final_board(self.board, 0)
-                self.player_two.update_final_board(self.board, 0)
+                self.player_one.update_final_board(self.board, board_prev, 0)
+                self.player_two.update_final_board(self.board, board_prev, 0)
                 return 0
 
 
@@ -653,12 +689,12 @@ def test_all_players():
 
 import matplotlib.pyplot as plt
 def simulate_games():
-    player_one = RandomPlayer('ai')
+    player_one = TemporalDifferencePlayer('ai')
     # player_one = DefencePlayer('ai')
     # player_one = OffensiveDefensivePlayer('ai')
     # player_one = RandomPlayer('ai_random')
     # player_two = RandomPlayer('ai_random')
-    player_two = TemporalDifferencePlayer('ai')
+    player_two = RandomPlayer('ai')
     one = two = draw = 0
     number_of_trials = 1e6
     for i in range(int(number_of_trials)):
@@ -672,6 +708,7 @@ def simulate_games():
             if winner == 0:
                 draw += 1
             # print('winner : {} game {}'.format(winner,i))
+            print('{}'.format(i/number_of_trials))
 
         else:
             game = Game(player_two, player_one, ui=None)
@@ -688,9 +725,10 @@ def simulate_games():
 
 
     print()
-    print('Player one won : {}'.format(one))
-    print('Player two won : {}'.format(two))
-    print('Draw           : {}'.format(draw))
+    print('Player one won       : {}'.format(one))
+    print('Player two won       : {}'.format(two))
+    print('Draw                 : {}'.format(draw))
+    print('Win ratio Player one : {}'.format(one / number_of_trials))
 
     x = np.arange(3)
     data = [one, draw, two]
@@ -703,5 +741,5 @@ if __name__ == '__main__':
     simulate_games()
 
 
-    test_all_players()
+    # test_all_players()
 
