@@ -14,6 +14,9 @@ class Player:
     def set_value(self, value):
         self.value = value
 
+    def update_final_board(self, board, value):
+        pass
+
 
 class RandomPlayer(Player):
     def __init__(self, name):
@@ -376,6 +379,31 @@ class TemporalDifferencePlayer(Player):
     '''
     def __init__(self, name):
         Player.__init__(self, name)
+        self.boards = np.ndarray(shape=[0, 9], dtype=int)
+        self.values = []
+
+    def __del__(self):
+        for (board, val) in zip(self.boards, self.values):
+            print(board.reshape(3,3), val)
+
+    def update_final_board(self, board, value):
+        index = self.get_index(board)
+        if index == -1:
+            if self.value == -1:
+                self.add_board(board*-1, value)
+            else:
+                self.add_board(board, value)
+
+
+    def get_index(self, board):
+        index = np.where((self.boards == board.reshape(9)).all(axis=1))[0]
+        if len(index) == 0:
+            return -1
+        return index[0]
+
+    def add_board(self, board, value):
+        self.boards = np.concatenate((self.boards, board.reshape(-1, 9)))
+        self.values.append(value)
 
     def check_player_won(self, value, board):
         for i in range(3):
@@ -525,16 +553,22 @@ class Game:
             if game_status == 1:
                 if self.ui == 'CLI':
                     print('player one won!')
+                self.player_one.update_final_board(self.board, 1)
+                self.player_two.update_final_board(self.board, 0)
                 return 1
 
             if game_status == -1:
                 if self.ui == 'CLI':
                     print('player two won!')
+                self.player_one.update_final_board(self.board, 0)
+                self.player_two.update_final_board(self.board, 1)
                 return -1
 
             if turns == 9:
                 if self.ui == 'CLI':
                     print('draw')
+                self.player_one.update_final_board(self.board, 0)
+                self.player_two.update_final_board(self.board, 0)
                 return 0
 
             pos = self.player_two.move(self.board)
@@ -549,16 +583,22 @@ class Game:
             if game_status == 1:
                 if self.ui == 'CLI':
                     print('player one won!')
+                self.player_one.update_final_board(self.board, 1)
+                self.player_two.update_final_board(self.board, 0)
                 return 1
 
             if game_status == -1:
                 if self.ui == 'CLI':
                     print('player two won!')
+                self.player_one.update_final_board(self.board, 0)
+                self.player_two.update_final_board(self.board, 1)
                 return -1
-            
+
             if turns == 9:
                 if self.ui == 'CLI':
                     print('draw')
+                self.player_one.update_final_board(self.board, 0)
+                self.player_two.update_final_board(self.board, 0)
                 return 0
 
 
