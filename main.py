@@ -374,7 +374,7 @@ class ProbabilityPlayer(Player):
                 return (x, y)
 
 
-class TemporalDifferencePlayer(Player):
+class TemporalDifferenceTrainingPlayer(Player):
     '''
     implementation of temporal-difference learning method from [sutton, barto]
     '''
@@ -516,6 +516,60 @@ class TemporalDifferencePlayer(Player):
                     return (x,y)
 
 
+class TemporalDifferencePlayer(Player):
+    '''
+    implementation of temporal-difference learning method from [sutton, barto]
+    '''
+    def __init__(self, name):
+        Player.__init__(self, name)
+
+        root_dir = os.getcwd()
+        pickle_name = 'td_random.pickle'
+        pickle_file = os.path.join(root_dir, pickle_name)
+
+        try:
+            with open(pickle_file, 'rb') as f:
+                save = pickle.load(f)
+                self.boards = save['boards']
+                self.values = save['values']
+                del save
+        except Exception as e:
+            print('Unable to load data to', pickle_file, ':', e)
+            raise
+
+    def get_index(self, board):
+        index = np.where((self.boards == board.reshape(9)).all(axis=1))[0]
+        if len(index) == 0:
+            return -1
+        return index[0]
+
+    def get_value_board(self, board):
+        board_probability = -1 * np.ones([3,3])
+
+        for i in range(3):
+            for j in range(3):
+                if board[i,j] != 0:
+                    continue
+
+                board_next_move = board.copy()
+                board_next_move[i,j] = 1
+
+                index = self.get_index(board_next_move)
+                if index == -1:
+                    board_probability[i, j] = 0.5
+                else:
+                    board_probability[i, j] = self.values[index]
+
+        return board_probability
+
+    def move(self, board):
+        if self.value == -1:
+            value_board = self.get_value_board(board*-1)
+        else:
+            value_board = self.get_value_board(board)
+
+        move = np.argwhere(value_board == np.max(value_board))[0]
+        return move
 
 
 class HumanPlayer(Player):
@@ -690,7 +744,7 @@ def game_against_ai():
 def test_all_players():
     players = [RandomPlayer('ai'), OffensivePlayer('ai'),
                DefencePlayer('ai'), OffensiveDefensivePlayer('ai'),
-               ProbabilityPlayer('ai'), TemporalDifferencePlayer('ai')]
+               ProbabilityPlayer('ai'), TemporalDifferenceTrainingPlayer('ai')]
 
     for i in range(len(players)):
         for j in range(len(players)):
@@ -702,14 +756,15 @@ def test_all_players():
 
 import matplotlib.pyplot as plt
 def simulate_games():
-    player_one = TemporalDifferencePlayer('td_random')
+    player_one = TemporalDifferenceTrainingPlayer('td_random')
     # player_one = DefencePlayer('ai')
     # player_one = OffensiveDefensivePlayer('ai')
     # player_one = RandomPlayer('ai_random')
     # player_two = RandomPlayer('ai_random')
     player_two = RandomPlayer('ai')
+    # player_one = TemporalDifferencePlayer('td')
     one = two = draw = 0
-    number_of_trials = 1e2
+    number_of_trials = 1e3
     for i in range(int(number_of_trials)):
         if random.random() < 0.5:
             game = Game(player_one, player_two, ui=None)
