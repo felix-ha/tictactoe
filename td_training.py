@@ -24,7 +24,7 @@ def train_td_player(player, number_of_trials):
             if winner == 0:
                 draw += 1
             # print('winner : {} game {}'.format(winner,i))
-            # print('{}'.format(i/number_of_trials))
+            print('{}'.format(i/number_of_trials))
 
         else:
             game = Game(player_two, player_one, ui=None)
@@ -45,6 +45,8 @@ def train_td_player(player, number_of_trials):
     print('Player two won       : {}'.format(two))
     print('Draw                 : {}'.format(draw))
     print('Win ratio Player one : {}'.format(one / number_of_trials))
+
+    player_one.plot_alpha()
 
     # x = np.arange(3)
     # data = [one, draw, two]
@@ -88,8 +90,8 @@ def test_td_player(player, number_of_trials):
 
 
 if __name__ == '__main__':
-    number_of_trials = 7e2
+    number_of_trials = 1e5
     player = RandomPlayer('ai')
     train_td_player(player, number_of_trials)
-    test_td_player(player, number_of_trials)
+    test_td_player(player, 1e3)
 

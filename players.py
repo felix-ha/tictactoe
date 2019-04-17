@@ -2,6 +2,7 @@ import numpy as np
 import random
 import os
 import pickle
+from matplotlib import pyplot as plt
 
 class Player:
     def __init__(self, name):
@@ -371,8 +372,10 @@ class TemporalDifferenceTrainingPlayer(Player):
         Player.__init__(self, name)
         self.boards = np.ndarray(shape=[0, 9], dtype=int)
         self.values = []
-        self.alpha = 0.5
+        self.alpha = 0.9
         self.games = 0
+
+        self.alphas = [self.alpha]
 
     def __del__(self):
         root_dir = os.getcwd()
@@ -390,6 +393,13 @@ class TemporalDifferenceTrainingPlayer(Player):
         except Exception as e:
             print('Unable to save data to', pickle_file, ':', e)
             raise
+
+    def plot_alpha(self):
+        x = range(self.games+1)
+        plt.plot(x, self.alphas)
+        plt.xlabel('games')
+        plt.ylabel('alpha')
+        plt.show()
 
     def update_final_board(self, board, board_prev, value):
         index = self.get_index(board)
@@ -410,7 +420,8 @@ class TemporalDifferenceTrainingPlayer(Player):
                 self.values[index] = V_current
 
         self.games += 1
-        self.alpha *= np.exp(-0.00000001 * self.games)
+        self.alpha *= np.exp(-0.000000001 * self.games)
+        self.alphas.append(self.alpha)
 
     def get_index(self, board):
         index = np.where((self.boards == board.reshape(9)).all(axis=1))[0]
@@ -467,7 +478,7 @@ class TemporalDifferenceTrainingPlayer(Player):
 
     def move(self, board):
         exploit = random.random()
-        if exploit > self.alpha:
+        if exploit > 0.2:
             index = self.get_index(board)
             if index == -1:
                 V_t_current = 0.5
