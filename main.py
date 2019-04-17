@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import os
+import pickle
 
 
 class Player:
@@ -385,9 +386,21 @@ class TemporalDifferencePlayer(Player):
         self.games = 0
 
     def __del__(self):
-        pass
+        root_dir = os.getcwd()
+        pickle_name = self.name + '.pickle'
+        pickle_file = os.path.join(root_dir, pickle_name)
 
-        print(self.alpha)
+        try:
+            f = open(pickle_file, 'wb')
+            save = {
+                'boards': self.boards,
+                'values': self.values
+            }
+            pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
+            f.close()
+        except Exception as e:
+            print('Unable to save data to', pickle_file, ':', e)
+            raise
 
 
 
@@ -689,14 +702,14 @@ def test_all_players():
 
 import matplotlib.pyplot as plt
 def simulate_games():
-    player_one = TemporalDifferencePlayer('ai')
+    player_one = TemporalDifferencePlayer('td_random')
     # player_one = DefencePlayer('ai')
     # player_one = OffensiveDefensivePlayer('ai')
     # player_one = RandomPlayer('ai_random')
     # player_two = RandomPlayer('ai_random')
     player_two = RandomPlayer('ai')
     one = two = draw = 0
-    number_of_trials = 1e6
+    number_of_trials = 1e2
     for i in range(int(number_of_trials)):
         if random.random() < 0.5:
             game = Game(player_one, player_two, ui=None)
